@@ -1,0 +1,53 @@
+spring:
+  kafka:
+    bootstrap-servers: <bootstrap-server>.confluent.cloud:9092
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='<API_KEY>' password='<API_SECRET>';
+  cloud:
+    function:
+      definition: stringSupplier;digitRemovingConsumer
+    stream:
+      bindings:
+        stringSupplier-out-0:
+          destination: batch-in
+        digitRemovingConsumer-in-0:
+          destination: batch-in
+          group: batch-in
+          consumer:
+            batch-mode: true
+        digitRemovingConsumer-out-0:
+          destination: batch-out
+    kafka:
+      binder:
+        brokers: <bootstrap-server>.confluent.cloud:9092
+        configuration:
+          auto.offset.reset: earliest
+          security.protocol: SASL_SSL
+          sasl.mechanism: PLAIN
+          sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='<API_KEY>' password='<API-SECRET>';
+      bindings:
+        digitRemovingConsumer-in-0:
+          consumer:
+            configuration:
+              # Forces consumer to wait 5 seconds before polling for messages
+              fetch.max.wait.ms: 5000
+              fetch.min.bytes: 1000000000
+              max.poll.records: 10000000
+management:
+  metrics:
+    export:
+      wavefront:
+        enabled: false
+      prometheus:
+        enabled: false
+        rsocket:
+          enabled: false
+  endpoint:
+    health:
+      show-details: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: metrics,health,info,bindings
